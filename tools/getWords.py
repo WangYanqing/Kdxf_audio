@@ -3,16 +3,12 @@
 
 
 from xml.dom import minidom
-import re
+import re, sys
 
 path = r'/Users/wangyanqing/AndroidStudioProjects/WAudioTest/app/src/main/assets/gs_dbs_fs_goodsbaseinfo.xml'
 path_out_txt = 'words.txt'
 path_out_abnf = 'words.abnf'
 
-words = []
-print '------start---------'
-doc = minidom.parse(path)
-goods_list = doc.getElementsByTagName('goods')
 
 # doc_out = minidom.Document()
 # element0 = doc_out.createElement('root')
@@ -48,7 +44,7 @@ def getStrippedName(word):
 	return word
 
 
-def makeFile(words, bAnbf = True):
+def makeFile(words, bAnbf = False):
 	out_file = open(bAnbf and path_out_abnf or path_out_txt, 'w')
 	if bAnbf:
 		out_file.write('#ABNF 1.0 UTF-8;\n'
@@ -73,41 +69,55 @@ def makeFile(words, bAnbf = True):
 
 print '------Parse------'
 
-for g in goods_list:
-	id = g.getAttribute('ID')
-	name = g.getAttribute('name')
-	type = g.getAttribute('TypeID')
+def main(goodsXmlPath, bExportAbnfFile = False):
+	print '------start---------'
+	words = []
+	doc = minidom.parse(goodsXmlPath)
+	goods_list = doc.getElementsByTagName('goods')
 
-	type = int(type)
-	if type == 26 or type == 43 or type == 36: #23礼包，43宝箱
-		continue
+	for g in goods_list:
+		id = g.getAttribute('ID')
+		name = g.getAttribute('name')
+		type = g.getAttribute('TypeID')
 
-	name = getStrippedName(name)
-	sch0 = re.search('\d+', name)
-	sch1 = re.search('[a-zA-Z]+', name)
-	if (name != None and name != '') \
-		and sch0 == None \
-		and sch1 == None \
-		and not (name in words):
-		# words.append(getStrippedName(name))
-		words.append(name)
-	# if type == 14:
-	# 	g0 = doc_out.createElement(g.tagName)
-	# 	element1.appendChild(g0)
-	# 	for k in g._attrs.keys():
-	# 		g0.setAttribute(k, g.getAttribute(k))
-	# 	break
+		type = int(type)
+		if type == 26 or type == 43 or type == 36: #23礼包，43宝箱
+			continue
+
+		name = getStrippedName(name)
+		sch0 = re.search('\d+', name)
+		sch1 = re.search('[a-zA-Z]+', name)
+		if (name != None and name != '') \
+			and sch0 == None \
+			and sch1 == None \
+			and not (name in words):
+			# words.append(getStrippedName(name))
+			words.append(name)
+		# if type == 14:
+		# 	g0 = doc_out.createElement(g.tagName)
+		# 	element1.appendChild(g0)
+		# 	for k in g._attrs.keys():
+		# 		g0.setAttribute(k, g.getAttribute(k))
+		# 	break
 
 
-print('--#words=%d' % len(words))
-# print(words)
-# print(doc_out.toprettyxml())
+	print('--#words=%d' % len(words))
+	# print(words)
+	# print(doc_out.toprettyxml())
 
-print '------Write------'
-# out_file = open(path_out, 'w')
-# for w in words:
-# 	out_file.write(w.encode('utf8') + '\n')
-# out_file.flush()
-# out_file.close()
-makeFile(words, False)
-print '------End------'
+	print '------Write------'
+	# out_file = open(path_out, 'w')
+	# for w in words:
+	# 	out_file.write(w.encode('utf8') + '\n')
+	# out_file.flush()
+	# out_file.close()
+	makeFile(words, bExportAbnfFile)
+	print '------End------'
+
+
+
+if __name__ == '__main__':
+	if len(sys.argv) <= 1:
+		main(path)
+	else:
+		main(sys.argv[1])
