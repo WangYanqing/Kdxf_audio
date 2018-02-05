@@ -1,13 +1,16 @@
-#!/usr/python
+#!/usr/bin/python
 #coding: utf8
 
 
 from xml.dom import minidom
 import re, sys
 
+
+TYPE_GOODS 		= 0
+TYPE_WARRIOR 	= 1
+TYPE_CARD 		= 2
+
 path = r'/Users/wangyanqing/AndroidStudioProjects/WAudioTest/app/src/main/assets/gs_dbs_fs_goodsbaseinfo.xml'
-path_out_txt = 'words.txt'
-path_out_abnf = 'words.abnf'
 
 
 # doc_out = minidom.Document()
@@ -44,8 +47,18 @@ def getStrippedName(word):
 	return word
 
 
-def makeFile(words, bAnbf = False):
-	out_file = open(bAnbf and path_out_abnf or path_out_txt, 'w')
+def makeFile(words, bAnbf = False, fileType = 0):
+	out_file_name = 'words_goods'
+	if fileType == 1:
+		out_file_name = 'words_warrs'
+	elif fileType == 2:
+		out_file_name = 'words_cards'
+	out_file_name = out_file_name + (bAnbf and '.abnf' or '.txt')
+
+	print('------Write------')
+	print('--Out file path=%s' % out_file_name)
+
+	out_file = open(out_file_name, 'w')
 	if bAnbf:
 		out_file.write('#ABNF 1.0 UTF-8;\n'
 			+ 'language zh-CN;\n'
@@ -67,22 +80,32 @@ def makeFile(words, bAnbf = False):
 	out_file.close()
 
 
-print '------Parse------'
 
-def main(goodsXmlPath, bExportAbnfFile = False):
-	print '------start---------'
+def main(goodsXmlPath, bExportAbnfFile = False, fileType = 0):
+	print('------start---------')
+	print('--xml file path: %s' % goodsXmlPath)
+
+
 	words = []
 	doc = minidom.parse(goodsXmlPath)
-	goods_list = doc.getElementsByTagName('goods')
+
+	rootElementName = 'goods'
+	if fileType == 1:
+		rootElementName = 'character'
+	elif fileType == 2:
+		rootElementName = 'Card'
+	goods_list = doc.getElementsByTagName(rootElementName)
 
 	for g in goods_list:
-		id = g.getAttribute('ID')
-		name = g.getAttribute('name')
-		type = g.getAttribute('TypeID')
+		id = g.getAttribute(fileType == 1 and 'ID' or (fileType == 2 and 'id' or 'CardID'))
+		name = g.getAttribute(fileType == 2 and 'Name' or 'name')
 
-		type = int(type)
-		if type == 26 or type == 43 or type == 36: #23礼包，43宝箱
-			continue
+		if fileType == 0:
+			type = g.getAttribute('TypeID')
+
+			type = int(type)
+			if type == 26 or type == 43 or type == 36: #23礼包，43宝箱
+				continue
 
 		name = getStrippedName(name)
 		sch0 = re.search('\d+', name)
@@ -101,23 +124,33 @@ def main(goodsXmlPath, bExportAbnfFile = False):
 		# 	break
 
 
-	print('--#words=%d' % len(words))
+	print('--The number of filtered #words=%d' % len(words))
 	# print(words)
 	# print(doc_out.toprettyxml())
 
-	print '------Write------'
+
 	# out_file = open(path_out, 'w')
 	# for w in words:
 	# 	out_file.write(w.encode('utf8') + '\n')
 	# out_file.flush()
 	# out_file.close()
-	makeFile(words, bExportAbnfFile)
-	print '------End------'
+	makeFile(words, bExportAbnfFile, fileType)
+	print('------End------')
 
 
 
 if __name__ == '__main__':
-	if len(sys.argv) <= 1:
-		main(path)
-	else:
-		main(sys.argv[1])
+	xmlPath = path
+	bAbnf = False
+	fileType = 0
+
+	print(sys.argv[0])
+	if len(sys.argv) > 1:
+		xmlPath = sys.argv[1]
+	if len(sys.argv) > 2:
+		bAbnf = sys.argv[2].lower() == 'true'
+	if len(sys.argv) > 3:
+		fileType = int(sys.argv[3])
+
+
+	main(xmlPath, bAbnf, fileType)
