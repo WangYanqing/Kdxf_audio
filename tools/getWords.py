@@ -9,6 +9,11 @@ import re, sys
 TYPE_GOODS 		= 0
 TYPE_WARRIOR 	= 1
 TYPE_CARD 		= 2
+TYPE_SKILL 		= 3
+
+ID_TAGS = ['ID', 'id', 'CardID', 'ID']
+NAME_TAGS = ['name', 'name', 'Name', 'Name']
+
 
 path = r'/Users/wangyanqing/AndroidStudioProjects/WAudioTest/app/src/main/assets/gs_dbs_fs_goodsbaseinfo.xml'
 
@@ -53,6 +58,8 @@ def makeFile(words, bAnbf = False, fileType = 0):
 		out_file_name = 'words_warrs'
 	elif fileType == 2:
 		out_file_name = 'words_cards'
+	elif fileType == 3:
+		out_file_name = 'words_skills'
 	out_file_name = out_file_name + (bAnbf and '.abnf' or '.txt')
 
 	print('------Write------')
@@ -94,11 +101,14 @@ def main(goodsXmlPath, bExportAbnfFile = False, fileType = 0):
 		rootElementName = 'character'
 	elif fileType == 2:
 		rootElementName = 'Card'
+	elif fileType == 3:
+		rootElementName = 'Skill'
+
 	goods_list = doc.getElementsByTagName(rootElementName)
 
 	for g in goods_list:
-		id = g.getAttribute(fileType == 1 and 'ID' or (fileType == 2 and 'id' or 'CardID'))
-		name = g.getAttribute(fileType == 2 and 'Name' or 'name')
+		id = g.getAttribute(ID_TAGS[fileType])
+		name = g.getAttribute(NAME_TAGS[fileType])
 
 		if fileType == 0:
 			type = g.getAttribute('TypeID')
